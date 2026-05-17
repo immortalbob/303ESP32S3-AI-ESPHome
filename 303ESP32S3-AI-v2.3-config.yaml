@@ -1,0 +1,244 @@
+# ============================================================
+# Board: 303ESP32S3-AI v2.3
+# Silkscreen: esp32s3-ai_v2.3 / 303esp32ai2 / 5437314r_p759_251206
+# Original Firmware SKU: bread-compact-wifi (Xiaozhi AI v2.0.3)
+# Chip: ESP32-S3-WROOM-1 N16R8 (16MB Flash, 8MB Octal PSRAM)
+# USB: CH340X (onboard, one-key flash, no manual reset needed)
+# Battery: TP5400 management chip (PH2.0 connector)
+# Speaker: PH2.0 connector
+# FCC ID: 2bb77-esps3-32
+# Board Size: 39x45.5mm
+#
+# CONFIRMED GPIO ASSIGNMENTS:
+# -------------------------------------------------------
+# INMP441 Microphone (I2S):
+#   WS   = GPIO4
+#   SCK  = GPIO5
+#   SD   = GPIO6
+#
+# MAX98357A Amplifier (I2S):
+#   BCLK = GPIO15
+#   LRC  = GPIO16
+#   DIN  = GPIO7
+#
+# Buttons:
+#   Vol Down = GPIO39 (ADC resistor ladder, INPUT_PULLUP)
+#   Vol Up   = GPIO40 (ADC resistor ladder, INPUT_PULLUP)
+#   WiFi     = GPIO1  (WiFi provisioning, INPUT_PULLUP)
+#   BOOT     = Hardware flash pin (not GPIO controllable)
+#   EN       = Hardware reset pin (not GPIO controllable)
+#
+# LEDs:
+#   4x Blue  = TP5400 battery indicator (hardware controlled, not ESP32)
+#   Red/Green= GPIO unknown (scanning incomplete)
+#
+# PIR Header (GND, OUT, VCC):
+#   OUT GPIO = UNKNOWN (to be determined, compatible with HC-SR501)
+#
+# PSRAM: 8MB Octal @ 80MHz (mode: octal required for N16R8)
+# Flash: 16MB QIO mode (CONFIG_ESPTOOLPY_FLASHMODE_QIO required)
+#
+# NOTES:
+#   - SSD1306 OLED display NOT physically present on this board variant
+#     (present on sibling SKU, firmware tries and fails to init it)
+#   - TP5400 blue charge LEDs cannot be controlled via software
+#   - Binary firmware extracted and analyzed to confirm pin assignments
+#   - Original Xiaozhi firmware speaks Chinese, board hardware confirmed working
+#   - GitHub: [your repo here]
+# ============================================================
+
+esphome:
+  name: DeviceName
+  friendly_name: FrientlyDeviceName
+  on_boot:
+    - priority: 600
+      then:
+        - text_sensor.template.publish:
+            id: reset_reason
+            state: !lambda |-
+              auto reason = esp_reset_reason();
+              switch(reason) {
+                case ESP_RST_POWERON: return std::string("Power On");
+                case ESP_RST_SW: return std::string("Software Reset");
+                case ESP_RST_PANIC: return std::string("Panic/Crash");
+                case ESP_RST_INT_WDT: return std::string("Interrupt Watchdog");
+                case ESP_RST_TASK_WDT: return std::string("Task Watchdog");
+                case ESP_RST_WDT: return std::string("Watchdog");
+                case ESP_RST_DEEPSLEEP: return std::string("Deep Sleep");
+                case ESP_RST_BROWNOUT: return std::string("Brownout");
+                default: return std::string("Unknown");
+              }
+    - priority: -100
+      then:
+        - delay: 5s
+        - wait_until:
+            api.connected:
+        - delay: 1s
+        - micro_wake_word.start:
+
+esp32:
+  board: esp32-s3-devkitc-1
+  variant: esp32s3
+  flash_size: 16MB
+  framework:
+    type: esp-idf
+    sdkconfig_options:
+      CONFIG_ESP32S3_DEFAULT_CPU_FREQ_240: "y"
+      CONFIG_ESP32S3_DATA_CACHE_64KB: "y"
+      CONFIG_ESP32S3_DATA_CACHE_LINE_64B: "y"
+      CONFIG_SPIRAM_SPEED_80M: "y"
+      CONFIG_ESPTOOLPY_FLASHMODE_QIO: "y"
+
+psram:
+  mode: octal
+  speed: 80MHz
+
+logger:
+  hardware_uart: UART0
+  level: INFO
+
+api:
+  encryption:
+    key: !secret api_key
+
+ota:
+  - platform: esphome
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  fast_connect: true
+  power_save_mode: none
+  ap:
+    ssid: "${friendly_name} Fallback"
+    password: !secret ap_password
+
+captive_portal:
+
+# ============================================================
+# SENSORS
+# ============================================================
+sensor:
+  - platform: uptime
+    name: "VA Uptime"
+  - platform: wifi_signal
+    name: "VA WiFi RSSI"
+    update_interval: 60s
+  - platform: internal_temperature
+    name: "VA Temperature"
+
+text_sensor:
+  - platform: template
+    name: "VA Reset Reason"
+    id: reset_reason
+    icon: "mdi:restart"
+
+binary_sensor:
+  - platform: status
+    name: "VA Online"
+
+  # Volume Down button - GPIO39
+  # Wire HA automation to this for volume control
+  - platform: gpio
+    pin:
+      number: GPIO39
+      mode: INPUT_PULLUP
+      inverted: true
+    name: "Volume Down"
+    id: vol_down
+
+  # Volume Up button - GPIO40
+  # Wire HA automation to this for volume control
+  - platform: gpio
+    pin:
+      number: GPIO40
+      mode: INPUT_PULLUP
+      inverted: true
+    name: "Volume Up"
+    id: vol_up
+
+  # WiFi button - GPIO1
+  # In original Xiaozhi firmware this triggered WiFi provisioning
+  # Can be repurposed for any HA automation
+  - platform: gpio
+    pin:
+      number: GPIO1
+      mode: INPUT_PULLUP
+      inverted: true
+    name: "WiFi Button"
+    id: wifi_btn
+
+  # PIR Motion Sensor - GPIO UNKNOWN
+  # Uncomment and set correct GPIO after determining pin
+  # Compatible with HC-SR501 or similar 3.3V PIR sensors
+  # Header pinout: GND, OUT, VCC (left to right)
+  # - platform: gpio
+  #   pin:
+  #     number: GPIOXX  # TODO: determine correct pin
+  #     mode: INPUT
+  #   name: "Motion"
+  #   device_class: motion
+
+# ============================================================
+# AUDIO
+# ============================================================
+i2s_audio:
+  - id: i2s_mic
+    i2s_lrclk_pin: GPIO4   # INMP441 WS
+    i2s_bclk_pin: GPIO5    # INMP441 SCK
+  - id: i2s_spk
+    i2s_lrclk_pin: GPIO16  # MAX98357A LRC
+    i2s_bclk_pin: GPIO15   # MAX98357A BCLK
+
+microphone:
+  - platform: i2s_audio
+    id: va_mic
+    i2s_audio_id: i2s_mic
+    i2s_din_pin: GPIO6     # INMP441 SD
+    adc_type: external
+    pdm: false
+    channel: left
+
+speaker:
+  - platform: i2s_audio
+    id: va_speaker
+    i2s_audio_id: i2s_spk
+    i2s_dout_pin: GPIO7    # MAX98357A DIN
+    dac_type: external
+    i2s_mode: primary
+    buffer_duration: 100ms
+
+# ============================================================
+# WAKE WORD (local, on-device processing)
+# ============================================================
+micro_wake_word:
+  models:
+    - model: hey_jarvis
+  on_wake_word_detected:
+    - delay: 300ms
+    - voice_assistant.start:
+
+# ============================================================
+# VOICE ASSISTANT
+# ============================================================
+voice_assistant:
+  id: va
+  microphone: va_mic
+  speaker: va_speaker
+  noise_suppression_level: 0
+  auto_gain: 31dBFS
+  volume_multiplier: 4.0
+  on_start:
+    - logger.log: "VA started - listening"
+  on_end:
+    - delay: 1s
+    - micro_wake_word.start:
+  on_error:
+    - lambda: |-
+        if (code.size()) {
+          ESP_LOGD("va", "VA error: %s", code.c_str());
+        } else {
+          ESP_LOGD("va", "VA error: <empty>");
+        }
+    - delay: 10s
+    - micro_wake_word.start:
