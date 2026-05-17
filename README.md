@@ -36,7 +36,7 @@ powered on, you have the right board.
 | Battery | TP5400 management chip, PH2.0 connector |
 | Speaker | PH2.0 connector (included in kit) |
 | Buttons | 5x (Vol Up, Vol Down, WiFi, BOOT, EN) |
-| LEDs | 4x Blue (TP5400 battery indicator), 1x Red, 1x Green |
+| LEDs | 4x Blue (TP5400 battery indicator), 2x Red, 1x Green |
 | PIR | Header exposed (GND, OUT, VCC) |
 
 ---
@@ -156,7 +156,7 @@ Since this board has a CH340X USB chip, flashing is straightforward:
 3. Flash using ESPHome dashboard or CLI
 
 ### Volume Button Automations
-The Vol Up and Vol Down buttons are exposed as binary sensors in Home Assistant. 
+The WiFi, Vol Up and Vol Down buttons are exposed as binary sensors in Home Assistant. 
 Wire them to automations to control whatever you like. Example automation for volume:
 
 ```yaml
