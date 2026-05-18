@@ -3,7 +3,7 @@
 
 This repository contains a fully working ESPHome configuration for the **303ESP32S3-AI v2.3** board,
 sold on eBay and AliExpress as a "Xiaozhi AI Voice Chat" module. This board has no official
-English documentation, no schematic, and no ESPHome support — so we made our own.
+English documentation, no schematic, and no ESPHome support that could be found...so we made our own.
 
 ---
 
@@ -330,6 +330,38 @@ are welcome.
 Reverse engineered over several days through binary analysis, ADC scanning, digital pin
 scanning, PIR sensor testing, and a lot of trial and error. Special thanks to the Xiaozhi
 open source firmware project whose boot logs and source code structure made this possible.
+
+---
+
+## AI Assistance
+
+This project was reverse engineered with significant assistance from AI language models.
+The process involved multiple AI systems each contributing different strengths:
+
+- **Claude (Anthropic)** — Primary assistant throughout the project. Led the binary firmware
+  analysis, GPIO scanning strategy, ESPHome configuration development, and iterative
+  debugging across several days. Stayed in the trenches for the long haul.
+
+- **DeepSeek** — Contributed a detailed technical summary of findings mid-project that 
+  helped consolidate knowledge and identify the `bread-compact-wifi` SKU significance.
+
+- **Copilot (Microsoft)** — Provided a second opinion on configuration stability. 
+  Correctly identified the `on_error` lambda logging fix and suggested the WiFi RSSI 
+  sensor. Got `power_save_mode` wrong but we don't talk about that.
+
+The combination of human curiosity, persistence, a soldering iron, and AI assistance 
+turned a completely undocumented eBay mystery board into a fully documented, 
+community-ready ESPHome configuration. 
+
+If you're attempting something similar with another undocumented board, the approach 
+that worked here was:
+1. Extract and analyze the factory firmware binary
+2. Capture the boot log for SKU/board identification  
+3. Cross reference against open source firmware repositories
+4. Systematic GPIO scanning — ADC for buttons, digital for PIR, output for LEDs
+5. Iterate, iterate, iterate
+
+Good luck. You'll need it. But probably less than we did.
 
 ---
 
