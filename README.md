@@ -3,7 +3,9 @@
 
 This repository contains a fully working ESPHome configuration for the **303ESP32S3-AI v2.3** board,
 sold on eBay and AliExpress as a "Xiaozhi AI Voice Chat" module. This board has no official
-English documentation, no schematic, and no ESPHome support that could be found...so we made our own.
+English documentation, no schematic, and no ESPHome support — so we made our own.
+
+![Board Front and Back](images/board.jpg)
 
 ---
 
@@ -77,9 +79,13 @@ This pinout was determined through a combination of:
 ## Hardware Notes
 
 ### Buttons
-- **Vol Up / Vol Down** — exposed as binary sensors in HA, wire to automations for volume control or any other purpose
-- **WiFi button** — in original Xiaozhi firmware this triggered WiFi provisioning. In ESPHome it is fully repurposable via HA automations — use it for anything you like: mute, scene change, presence toggle, etc.
-- **BOOT** — hardware flash button, holds GPIO0 low to enter flash mode. Not controllable in firmware.
+- **Vol Up / Vol Down** — exposed as binary sensors in HA, wire to automations for volume
+  control or any other purpose
+- **WiFi button** — in original Xiaozhi firmware this triggered WiFi provisioning. In ESPHome
+  it is fully repurposable via HA automations — use it for anything you like: mute, scene
+  change, presence toggle, etc.
+- **BOOT** — hardware flash button, holds GPIO0 low to enter flash mode. Not controllable
+  in firmware.
 - **EN** — hardware reset button. Not controllable in firmware.
 
 ### PIR Sensor
@@ -90,22 +96,12 @@ The OUT pin is confirmed on **GPIO8**. The HC-SR501 has two adjustment potentiom
 
 Allow 30-60 seconds after boot for the HC-SR501 to warm up before it begins detecting reliably.
 
-### LEDs
-The **4 blue LEDs** are driven directly by the TP5400 battery management IC and indicate charge
-level. They cannot be controlled via software. The only way to silence them is physical
-(tape, nail polish, or desoldering).
-
-The **2 red LEDs and 1 green LED** were not found after exhaustive scanning of all available
-ESP32-S3 GPIO pins as both inputs and outputs. They are believed to be hardwired to power rails
-rather than controlled by the ESP32. The green LED appears to be a simple power indicator
-(always on when USB connected). If you identify these pins, please submit a PR!
-
 ### Battery
 The TP5400 supports external **3.7V LiPo single cell batteries** via the PH2.0 connector.
-Common compatible batteries include 18650 cells with PH2.0 leads or flat LiPo packs 
+Common compatible batteries include 18650 cells with PH2.0 leads or flat LiPo packs
 in the 500mAh-2000mAh range.
 
-**Important:** Pay close attention to polarity before connecting — positive and negative 
+**Important:** Pay close attention to polarity before connecting — positive and negative
 are marked on the PCB. Reversing polarity will damage the board.
 
 The TP5400 provides:
@@ -115,6 +111,16 @@ The TP5400 provides:
 - Overcharge and overdischarge protection
 
 The board will function normally on USB power alone without a battery connected.
+
+### LEDs
+The **4 blue LEDs** are driven directly by the TP5400 battery management IC and indicate charge
+level. They cannot be controlled via software. The only way to silence them is physical
+(tape, nail polish, or desoldering).
+
+The **2 red LEDs and 1 green LED** were not found after exhaustive scanning of all available
+ESP32-S3 GPIO pins as both inputs and outputs. They are believed to be hardwired to power rails
+rather than controlled by the ESP32. The green LED appears to be a simple power indicator
+(always on when USB connected). If you identify these pins, please submit a PR!
 
 ### What's NOT on this board variant
 - **No OLED display** — The Xiaozhi firmware attempts to initialize an SSD1306 display and fails.
@@ -128,6 +134,228 @@ Using the wrong mode will cause boot failures or instability.
 ### Flash Mode
 `CONFIG_ESPTOOLPY_FLASHMODE_QIO: "y"` is required in sdkconfig_options. Without it the board
 may experience subtle instability or boot issues after extended uptime.
+
+---
+
+## Prerequisites
+
+Before flashing this configuration you will need a working Home Assistant installation
+with the following components configured:
+
+### Required
+- **Home Assistant OS** — tested on Core 2026.5.2, OS 17.3, Frontend 20260429.4
+- **ESPHome Device Builder** — tested on 2026.5.0b1 (beta). Standard release may work
+  but has not been verified with this configuration.
+- **Faster-Whisper** — local speech to text engine. Install via HA Add-on Store.
+  Recommended model: `large-v3-turbo` for best accuracy on a CPU-based server.
+- **openWakeWord** — only required if using server-side wake word instead of local
+  `micro_wake_word`. Install via HA Add-on Store.
+- **A configured Voice Assistant pipeline** — Settings → Voice Assistants → Add Assistant.
+  Set STT to Faster-Whisper and TTS to your preferred engine.
+
+### Text to Speech Options
+Any HA-compatible TTS engine will work. Popular choices:
+- **Piper** — fully local, fast, decent quality. Install via HA Add-on Store.
+- **Home Assistant Cloud (Nabu Casa)** — subscription based, highest quality voices.
+- **Edge TTS** — free, Microsoft Azure voices, requires internet connection.
+
+### Hardware
+- 303ESP32S3-AI v2.3 board
+- USB-C cable (data capable, not charge-only)
+- 5V USB power supply (quality matters — cheap supplies can cause instability)
+- Optional: HC-SR501 PIR sensor for motion detection
+- Optional: 3.7V LiPo battery for untethered operation
+
+---
+
+## ESPHome Setup
+
+### First Flash
+Since this board has a CH340X USB chip, flashing is straightforward:
+1. Connect via USB-C
+2. No need to hold BOOT or press EN — one-key flash is supported
+3. Flash using ESPHome dashboard or CLI
+
+### Wake Word Configuration
+
+This configuration uses **local on-device wake word processing** via `micro_wake_word`.
+This means wake word detection happens entirely on the ESP32-S3 itself, without any
+round trip to Home Assistant. Benefits include:
+
+- Lower latency response
+- No duplicate wake word conflicts when using multiple satellites
+- Works even if HA is briefly unavailable
+
+The default wake word is **"Hey Jarvis"**. To change it, modify the model line:
+
+```yaml
+micro_wake_word:
+  models:
+    - model: hey_jarvis    # default
+```
+
+Other available models include:
+
+| Wake Word | Model String |
+|---|---|
+| Hey Jarvis | `hey_jarvis` |
+| Okay Nabu | `okay_nabu` |
+| Hey Mycroft | `hey_mycroft` |
+| Alexa | `alexa` |
+
+Simply replace `hey_jarvis` with your preferred model string and reflash.
+
+### Cloud/Server-Side Wake Word (Alternative)
+
+If you prefer to use openWakeWord running on your Home Assistant server instead of
+local processing, replace the `micro_wake_word` block and update `voice_assistant` as follows:
+
+```yaml
+voice_assistant:
+  id: va
+  microphone: va_mic
+  speaker: va_speaker
+  noise_suppression_level: 0
+  auto_gain: 31dBFS
+  volume_multiplier: 4.0
+  use_wake_word: true
+  on_wake_word_detected:
+    - voice_assistant.start:
+  on_end:
+    - delay: 1s
+    - voice_assistant.start_continuous:
+  on_error:
+    - lambda: |-
+        if (code.size()) {
+          ESP_LOGD("va", "VA error: %s", code.c_str());
+        } else {
+          ESP_LOGD("va", "VA error: <empty>");
+        }
+    - delay: 10s
+    - voice_assistant.start_continuous:
+```
+
+And remove the `micro_wake_word:` block entirely.
+
+**Note:** When using server-side wake word with multiple satellites, you may encounter
+`duplicate_wake_up_detected` errors if all devices hear the same wake word simultaneously.
+Using different wake words per room or switching to local processing resolves this.
+
+### Multiple Rooms
+To deploy to multiple boards, only change these values per device:
+- `name:`
+- `friendly_name:`
+- `api encryption key:` — generate a new one for each device
+
+Everything else including GPIO assignments is identical across all boards of this model.
+
+### Secrets Required
+Add these to your ESPHome `secrets.yaml`:
+```yaml
+wifi_ssid: "Your WiFi SSID"
+wifi_password: "Your WiFi Password"
+api_key: "Generate with ESPHome dashboard"
+ap_password: "Your fallback AP password"
+```
+
+### Volume Button Automations
+The Vol Up and Vol Down buttons are exposed as binary sensors in HA.
+Example automation:
+```yaml
+automation:
+  - alias: "Voice Satellite Volume Up"
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.master_bedroom_volume_up
+        to: "on"
+    action:
+      - service: number.set_value
+        target:
+          entity_id: number.master_bedroom_volume
+        data:
+          value: "{{ [states('number.master_bedroom_volume') | float + 10, 100] | min }}"
+```
+
+### WiFi Button Automations
+The WiFi button is fully repurposable. Example — use it to toggle a scene:
+```yaml
+automation:
+  - alias: "WiFi Button Toggle Scene"
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.master_bedroom_wifi_button
+        to: "on"
+    action:
+      - service: scene.turn_on
+        target:
+          entity_id: scene.bedroom_night
+```
+
+### PIR Motion Automations
+The PIR sensor is exposed as a motion binary sensor in HA. Example — turn on lights on motion:
+```yaml
+automation:
+  - alias: "PIR Motion Lights"
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.master_bedroom_motion
+        to: "on"
+    action:
+      - service: light.turn_on
+        target:
+          entity_id: light.bedroom_lights
+```
+
+---
+
+## Troubleshooting
+
+### Board won't flash
+- Make sure your USB-C cable supports data (not charge-only)
+- The CH340X handles flashing automatically — no need to hold BOOT or press EN
+- If it still fails, try holding BOOT while plugging in, then release after connection
+
+### Board boots but won't connect to HA
+- Check your `api encryption key` matches what HA expects
+- Verify WiFi credentials in `secrets.yaml`
+- Watch the ESPHome logs — connection issues are clearly reported
+
+### `stt-no-text-recognized` error
+- Speak your command immediately after the wake word without pausing
+- Try increasing `volume_multiplier` to `6.0` or higher
+- Check Faster-Whisper is running and healthy in HA
+- Switch STT engine to Faster-Whisper if not already using it
+- In Faster-Whisper settings, try setting beam size to 1 for faster response
+
+### Wake word not triggering
+- Give the board 5-10 seconds after boot before speaking
+- Check openWakeWord threshold in Settings → Devices & Services → Wyoming → openWakeWord
+- Lower threshold from 0.5 to 0.3 for more sensitivity
+- Increase `volume_multiplier` if mic pickup is weak
+
+### Board goes unresponsive after extended use
+- This is a known issue in ESPHome/HA voice pipeline — the `on_error` restart logic
+  in this config mitigates it
+- Check HA logs for aioesphomeapi errors
+- Ensure HA is updated to 2026.5.2 or later which includes aioesphomeapi fixes
+- Verify power supply quality — `Power On` reset reason indicates power instability
+
+### Compiler runs out of memory / crashes during build
+- The micro_wake_word model adds significant compile overhead
+- Close other applications on your HA host during compilation
+- If using a low-RAM system, try compiling without `micro_wake_word` first then add it
+- Sometimes a second compile attempt succeeds after the first fails
+
+### PSRAM boot hang
+- Ensure `psram: mode: octal` is set — this is mandatory for N16R8
+- Ensure `CONFIG_ESPTOOLPY_FLASHMODE_QIO: "y"` is in sdkconfig_options
+- Do NOT add `CONFIG_SPIRAM_MODE_OCT` to sdkconfig_options when using the `psram:` block
+  — having both causes a boot hang
+
+### Duplicate wake word detected errors
+- Occurs when multiple satellites all hear the same wake word simultaneously
+- Solution: use local `micro_wake_word` (default in this config) instead of server-side
+  wake word — each device processes independently eliminating the conflict
 
 ---
 
@@ -177,153 +405,6 @@ under ESP32 control.
 
 ---
 
-## ESPHome Setup
-
-### Prerequisites
-- [ESPHome](https://esphome.io) 2026.5.0 or later
-- Home Assistant with:
-  - [openWakeWord](https://www.home-assistant.io/integrations/open_wake_word/) configured
-  - [Faster-Whisper](https://www.home-assistant.io/integrations/faster_whisper/) for STT
-  - A configured Voice Assistant pipeline
-
-### Secrets Required
-Add these to your ESPHome `secrets.yaml`:
-```yaml
-wifi_ssid: "Your WiFi SSID"
-wifi_password: "Your WiFi Password"
-api_key: "Generate with ESPHome dashboard"
-ap_password: "Your fallback AP password"
-```
-
-### First Flash
-Since this board has a CH340X USB chip, flashing is straightforward:
-1. Connect via USB-C
-2. Might need to hold BOOT depending on flash method
-3. Flash using ESPHome dashboard or CLI
-
-### Wake Word Configuration
-
-This configuration uses **local on-device wake word processing** via `micro_wake_word`. 
-This means wake word detection happens entirely on the ESP32-S3 itself, without any 
-round trip to Home Assistant. Benefits include:
-
-- Lower latency response
-- No duplicate wake word conflicts when using multiple satellites
-- Works even if HA is briefly unavailable
-
-The default wake word is **"Hey Jarvis"**. To change it, modify the model line:
-
-```yaml
-micro_wake_word:
-  models:
-    - model: hey_jarvis    # default
-```
-
-Other available models include:
-
-| Wake Word | Model String |
-|---|---|
-| Hey Jarvis | `hey_jarvis` |
-| Okay Nabu | `okay_nabu` |
-| Hey Mycroft | `hey_mycroft` |
-| Alexa | `alexa` |
-
-Simply replace `hey_jarvis` with your preferred model string and reflash.
-
-### Cloud/Server-Side Wake Word (Alternative)
-
-If you prefer to use openWakeWord running on your Home Assistant server instead of 
-local processing, replace the `micro_wake_word` block and update `voice_assistant` as follows:
-
-```yaml
-voice_assistant:
-  id: va
-  microphone: va_mic
-  speaker: va_speaker
-  noise_suppression_level: 0
-  auto_gain: 31dBFS
-  volume_multiplier: 4.0
-  use_wake_word: true
-  on_wake_word_detected:
-    - voice_assistant.start:
-  on_end:
-    - delay: 1s
-    - voice_assistant.start_continuous:
-  on_error:
-    - lambda: |-
-        if (code.size()) {
-          ESP_LOGD("va", "VA error: %s", code.c_str());
-        } else {
-          ESP_LOGD("va", "VA error: <empty>");
-        }
-    - delay: 10s
-    - voice_assistant.start_continuous:
-```
-
-And remove the `micro_wake_word:` block entirely.
-
-**Note:** When using server-side wake word with multiple satellites, you may encounter 
-`duplicate_wake_up_detected` errors if all devices hear the same wake word simultaneously. 
-Using different wake words per room or switching to local processing resolves this.
-
-### Multiple Rooms
-To deploy to multiple boards, only change these values per device:
-- `name:`
-- `friendly_name:`
-- `api encryption key:` — generate a new one for each device
-
-Everything else including GPIO assignments is identical across all boards of this model.
-
-### Volume Button Automations
-The Vol Up and Vol Down buttons are exposed as binary sensors in HA.
-Example automation:
-```yaml
-automation:
-  - alias: "Voice Satellite Volume Up"
-    trigger:
-      - platform: state
-        entity_id: binary_sensor.master_bedroom_volume_up
-        to: "on"
-    action:
-      - service: number.set_value
-        target:
-          entity_id: number.master_bedroom_volume
-        data:
-          value: "{{ [states('number.master_bedroom_volume') | float + 10, 100] | min }}"
-```
-
-### WiFi Button Automations
-The WiFi button is fully repurposable. Example — use it to toggle a scene:
-```yaml
-automation:
-  - alias: "WiFi Button Toggle Scene"
-    trigger:
-      - platform: state
-        entity_id: binary_sensor.master_bedroom_wifi_button
-        to: "on"
-    action:
-      - service: scene.turn_on
-        target:
-          entity_id: scene.bedroom_night
-```
-
-### PIR Motion Automations
-The PIR sensor is exposed as a motion binary sensor in HA. Example — wake a screen on motion:
-```yaml
-automation:
-  - alias: "PIR Wake Screen"
-    trigger:
-      - platform: state
-        entity_id: binary_sensor.master_bedroom_motion
-        to: "on"
-    action:
-      - service: light.turn_on
-        target:
-          entity_id: light.bedroom_lights
-```
-
----
-
 ## Known Issues / TODO
 
 - [ ] 2x Red LED GPIO pins not identified — believed hardwired to power rail
@@ -341,14 +422,6 @@ are welcome.
 
 ---
 
-## Credits
-
-Reverse engineered over several days through binary analysis, ADC scanning, digital pin
-scanning, PIR sensor testing, and a lot of trial and error. Special thanks to the Xiaozhi
-open source firmware project whose boot logs and source code structure made this possible.
-
----
-
 ## AI Assistance
 
 This project was reverse engineered with significant assistance from AI language models.
@@ -358,21 +431,21 @@ The process involved multiple AI systems each contributing different strengths:
   analysis, GPIO scanning strategy, ESPHome configuration development, and iterative
   debugging across several days. Stayed in the trenches for the long haul.
 
-- **DeepSeek** — Contributed a detailed technical summary of findings mid-project that 
+- **DeepSeek** — Contributed a detailed technical summary of findings mid-project that
   helped consolidate knowledge and identify the `bread-compact-wifi` SKU significance.
 
-- **Copilot (Microsoft)** — Provided a second opinion on configuration stability. 
-  Correctly identified the `on_error` lambda logging fix and suggested the WiFi RSSI 
+- **Copilot (Microsoft)** — Provided a second opinion on configuration stability.
+  Correctly identified the `on_error` lambda logging fix and suggested the WiFi RSSI
   sensor. Got `power_save_mode` wrong but we don't talk about that.
 
-The combination of human curiosity, persistence, a soldering iron, and AI assistance 
-turned a completely undocumented eBay mystery board into a fully documented, 
-community-ready ESPHome configuration. 
+The combination of human curiosity, persistence, a soldering iron, and AI assistance
+turned a completely undocumented eBay mystery board into a fully documented,
+community-ready ESPHome configuration.
 
-If you're attempting something similar with another undocumented board, the approach 
+If you're attempting something similar with another undocumented board, the approach
 that worked here was:
 1. Extract and analyze the factory firmware binary
-2. Capture the boot log for SKU/board identification  
+2. Capture the boot log for SKU/board identification
 3. Cross reference against open source firmware repositories
 4. Systematic GPIO scanning — ADC for buttons, digital for PIR, output for LEDs
 5. Iterate, iterate, iterate
