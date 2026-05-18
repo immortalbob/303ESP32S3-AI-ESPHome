@@ -100,6 +100,22 @@ ESP32-S3 GPIO pins as both inputs and outputs. They are believed to be hardwired
 rather than controlled by the ESP32. The green LED appears to be a simple power indicator
 (always on when USB connected). If you identify these pins, please submit a PR!
 
+### Battery
+The TP5400 supports external **3.7V LiPo single cell batteries** via the PH2.0 connector.
+Common compatible batteries include 18650 cells with PH2.0 leads or flat LiPo packs 
+in the 500mAh-2000mAh range.
+
+**Important:** Pay close attention to polarity before connecting — positive and negative 
+are marked on the PCB. Reversing polarity will damage the board.
+
+The TP5400 provides:
+- Charging via USB-C while battery is connected
+- Automatic switchover between USB and battery power
+- Battery level indication via the 4x blue LEDs (25% per LED)
+- Overcharge and overdischarge protection
+
+The board will function normally on USB power alone without a battery connected.
+
 ### What's NOT on this board variant
 - **No OLED display** — The Xiaozhi firmware attempts to initialize an SSD1306 display and fails.
   A sibling SKU exists with the display populated. Your board is the "compact" variant without it.
