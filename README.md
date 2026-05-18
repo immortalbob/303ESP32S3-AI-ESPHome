@@ -365,7 +365,9 @@ This board came with zero English documentation. Here's how the GPIO pinout was 
 
 ### 1. Board Identification
 The board was identified by powering it on and capturing the serial boot log, which contained:
+
 ```I (232) Board: UUID=ee2f52e2-c6cf-4633-b1e0-a9fb258aea01 SKU=bread-compact-wifi```
+
 This SKU matched the Xiaozhi AI open source firmware repository.
 
 ### 2. Factory Firmware Analysis
