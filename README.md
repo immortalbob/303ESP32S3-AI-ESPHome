@@ -312,8 +312,8 @@ automation:
 
 ### Board won't flash
 - Make sure your USB-C cable supports data (not charge-only)
-- The CH340X handles flashing automatically — no need to hold BOOT or press EN
-- If it still fails, try holding BOOT while plugging in, then release after connection
+- The CH340X handles flashing automatically
+- If it still fails, try holding BOOT before flashing, then release after flash begins
 
 ### Board boots but won't connect to HA
 - Check your `api encryption key` matches what HA expects
@@ -436,8 +436,8 @@ The process involved multiple AI systems each contributing different strengths:
 
 - **Copilot (Microsoft)** — Provided a second opinion on configuration stability.
   Correctly identified the `on_error` lambda logging fix and suggested the WiFi RSSI
-  sensor. Got `power_save_mode` wrong but we don't talk about that.
-
+  sensor.
+  
 The combination of human curiosity, persistence, a soldering iron, and AI assistance
 turned a completely undocumented eBay mystery board into a fully documented,
 community-ready ESPHome configuration.
