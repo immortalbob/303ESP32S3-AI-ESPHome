@@ -22,34 +22,35 @@
 #   DIN  = GPIO7
 #
 # Buttons:
-#   Vol Down = GPIO39 (ADC resistor ladder, INPUT_PULLUP)
-#   Vol Up   = GPIO40 (ADC resistor ladder, INPUT_PULLUP)
-#   WiFi     = GPIO1  (WiFi provisioning, INPUT_PULLUP)
+#   Vol Down = GPIO39 (INPUT_PULLUP, inverted)
+#   Vol Up   = GPIO40 (INPUT_PULLUP, inverted)
+#   WiFi     = GPIO1  (INPUT_PULLUP, inverted, fully repurposable via HA)
 #   BOOT     = Hardware flash pin (not GPIO controllable)
 #   EN       = Hardware reset pin (not GPIO controllable)
 #
+# PIR Header (GND, OUT, VCC):
+#   OUT = GPIO8 (confirmed, HC-SR501 compatible)
+#
 # LEDs:
 #   4x Blue  = TP5400 battery indicator (hardware controlled, not ESP32)
-#   Red/Green= GPIO unknown (scanning incomplete)
-#
-# PIR Header (GND, OUT, VCC):
-#   OUT GPIO = UNKNOWN (to be determined, compatible with HC-SR501)
+#   2x Red   = GPIO not found after exhaustive scan (likely hardwired)
+#   1x Green = GPIO not found after exhaustive scan (likely power indicator)
 #
 # PSRAM: 8MB Octal @ 80MHz (mode: octal required for N16R8)
 # Flash: 16MB QIO mode (CONFIG_ESPTOOLPY_FLASHMODE_QIO required)
 #
 # NOTES:
 #   - SSD1306 OLED display NOT physically present on this board variant
-#     (present on sibling SKU, firmware tries and fails to init it)
 #   - TP5400 blue charge LEDs cannot be controlled via software
+#   - Red/Green LEDs not found after exhaustive GPIO scan
 #   - Binary firmware extracted and analyzed to confirm pin assignments
-#   - Original Xiaozhi firmware speaks Chinese, board hardware confirmed working
-#   - GitHub: [your repo here]
+#   - Original Xiaozhi firmware speaks Chinese, hardware confirmed working
+#   - GitHub: https://github.com/immortalbob/303ESP32S3-AI-ESPHome
 # ============================================================
 
 esphome:
-  name: DeviceName
-  friendly_name: FrientlyDeviceName
+  name: your-device-name
+  friendly_name: Your Device Name
   on_boot:
     - priority: 600
       then:
@@ -110,7 +111,7 @@ wifi:
   fast_connect: true
   power_save_mode: none
   ap:
-    ssid: "${friendly_name} Fallback"
+    ssid: "your-device-name-fallback"
     password: !secret ap_password
 
 captive_portal:
@@ -133,12 +134,14 @@ text_sensor:
     id: reset_reason
     icon: "mdi:restart"
 
+# ============================================================
+# BINARY SENSORS
+# ============================================================
 binary_sensor:
   - platform: status
     name: "VA Online"
 
-  # Volume Down button - GPIO39
-  # Wire HA automation to this for volume control
+  # Volume Down button - wire HA automation for volume control
   - platform: gpio
     pin:
       number: GPIO39
@@ -147,8 +150,7 @@ binary_sensor:
     name: "Volume Down"
     id: vol_down
 
-  # Volume Up button - GPIO40
-  # Wire HA automation to this for volume control
+  # Volume Up button - wire HA automation for volume control
   - platform: gpio
     pin:
       number: GPIO40
@@ -157,9 +159,8 @@ binary_sensor:
     name: "Volume Up"
     id: vol_up
 
-  # WiFi button - GPIO1
-  # In original Xiaozhi firmware this triggered WiFi provisioning
-  # Can be repurposed for any HA automation
+  # WiFi button - fully repurposable via HA automation
+  # Original Xiaozhi firmware used this for WiFi provisioning
   - platform: gpio
     pin:
       number: GPIO1
@@ -168,16 +169,16 @@ binary_sensor:
     name: "WiFi Button"
     id: wifi_btn
 
-  # PIR Motion Sensor - GPIO UNKNOWN
-  # Uncomment and set correct GPIO after determining pin
-  # Compatible with HC-SR501 or similar 3.3V PIR sensors
+  # PIR Motion Sensor - HC-SR501 compatible
   # Header pinout: GND, OUT, VCC (left to right)
-  # - platform: gpio
-  #   pin:
-  #     number: GPIOXX  # TODO: determine correct pin
-  #     mode: INPUT
-  #   name: "Motion"
-  #   device_class: motion
+  # Allow 30-60 seconds after boot for warm up
+  - platform: gpio
+    pin:
+      number: GPIO8
+      mode: INPUT
+    name: "Motion"
+    id: pir_motion
+    device_class: motion
 
 # ============================================================
 # AUDIO
