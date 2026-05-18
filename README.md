@@ -15,8 +15,9 @@ If you have this board, you'll see these markings on the PCB:
 - `303esp32ai2`
 - `5437314r_p759_251206`
 - FCC ID: `2bb77-esps3-32`
-- Board size: 39x45.5mm
-- Original firmware SKU: `bread-compact-wifi` (Xiaozhi AI v2.0.3, ESP-IDF v5.5)
+
+Board size: 39x45.5mm
+Original firmware SKU: `bread-compact-wifi` (Xiaozhi AI v2.0.3, ESP-IDF v5.5)
 
 The board ships running Chinese-language Xiaozhi AI firmware. If your board speaks Chinese when
 powered on, you have the right board.
