@@ -173,7 +173,7 @@ Any HA-compatible TTS engine will work. Popular choices:
 ### First Flash
 Since this board has a CH340X USB chip, flashing is straightforward:
 1. Connect via USB-C
-2. No need to hold BOOT or press EN — one-key flash is supported
+2. May need to hold BOOT depending on flash method
 3. Flash using ESPHome dashboard or CLI
 
 ### Wake Word Configuration
