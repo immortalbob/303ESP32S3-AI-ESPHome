@@ -181,6 +181,71 @@ Since this board has a CH340X USB chip, flashing is straightforward:
 2. Might need to hold BOOT depending on flash method
 3. Flash using ESPHome dashboard or CLI
 
+### Wake Word Configuration
+
+This configuration uses **local on-device wake word processing** via `micro_wake_word`. 
+This means wake word detection happens entirely on the ESP32-S3 itself, without any 
+round trip to Home Assistant. Benefits include:
+
+- Lower latency response
+- No duplicate wake word conflicts when using multiple satellites
+- Works even if HA is briefly unavailable
+
+The default wake word is **"Hey Jarvis"**. To change it, modify the model line:
+
+```yaml
+micro_wake_word:
+  models:
+    - model: hey_jarvis    # default
+```
+
+Other available models include:
+
+| Wake Word | Model String |
+|---|---|
+| Hey Jarvis | `hey_jarvis` |
+| Okay Nabu | `okay_nabu` |
+| Hey Mycroft | `hey_mycroft` |
+| Alexa | `alexa` |
+
+Simply replace `hey_jarvis` with your preferred model string and reflash.
+
+### Cloud/Server-Side Wake Word (Alternative)
+
+If you prefer to use openWakeWord running on your Home Assistant server instead of 
+local processing, replace the `micro_wake_word` block and update `voice_assistant` as follows:
+
+```yaml
+voice_assistant:
+  id: va
+  microphone: va_mic
+  speaker: va_speaker
+  noise_suppression_level: 0
+  auto_gain: 31dBFS
+  volume_multiplier: 4.0
+  use_wake_word: true
+  on_wake_word_detected:
+    - voice_assistant.start:
+  on_end:
+    - delay: 1s
+    - voice_assistant.start_continuous:
+  on_error:
+    - lambda: |-
+        if (code.size()) {
+          ESP_LOGD("va", "VA error: %s", code.c_str());
+        } else {
+          ESP_LOGD("va", "VA error: <empty>");
+        }
+    - delay: 10s
+    - voice_assistant.start_continuous:
+```
+
+And remove the `micro_wake_word:` block entirely.
+
+**Note:** When using server-side wake word with multiple satellites, you may encounter 
+`duplicate_wake_up_detected` errors if all devices hear the same wake word simultaneously. 
+Using different wake words per room or switching to local processing resolves this.
+
 ### Multiple Rooms
 To deploy to multiple boards, only change these values per device:
 - `name:`
