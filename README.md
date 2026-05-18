@@ -17,6 +17,7 @@ If you have this board, you'll see these markings on the PCB:
 - FCC ID: `2bb77-esps3-32`
 
 Board size: 39x45.5mm
+
 Original firmware SKU: `bread-compact-wifi` (Xiaozhi AI v2.0.3, ESP-IDF v5.5)
 
 The board ships running Chinese-language Xiaozhi AI firmware. If your board speaks Chinese when
