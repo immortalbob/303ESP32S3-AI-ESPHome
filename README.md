@@ -16,7 +16,9 @@ If you have this board, you'll see these markings on the PCB:
 - `5437314r_p759_251206`
 - FCC ID: `2bb77-esps3-32`
 
-Board size: 39x45.5mm
+Other Identification:
+- Board size: 39x45.5mm
+- Retina shattering Green and Blue LEDs
 
 Original firmware SKU: `bread-compact-wifi` (Xiaozhi AI v2.0.3, ESP-IDF v5.5)
 
