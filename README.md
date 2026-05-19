@@ -72,7 +72,7 @@ This pinout was determined through a combination of:
 | EN | Hardware | Reset pin, not GPIO controllable |
 | 2x Red LEDs | Unknown | Not found after exhaustive GPIO scan |
 | 1x Green LED | Unknown | Not found after exhaustive GPIO scan |
-| 4x Blue LEDs | N/A | TP5400 hardware controlled, not ESP32 |
+| 4x Blue LEDs | N/A | TP5410 hardware controlled, not ESP32 |
 | Status LED (WS2812) | GPIO48 | Confirmed from source — NOT POPULATED on this variant |
 | Touch button | GPIO47 | Confirmed from source — NOT POPULATED on this variant |
 ---
@@ -98,14 +98,14 @@ The OUT pin is confirmed on **GPIO8**. The HC-SR501 has two adjustment potentiom
 Allow 30-60 seconds after boot for the HC-SR501 to warm up before it begins detecting reliably.
 
 ### Battery
-The TP5400 supports external **3.7V LiPo single cell batteries** via the PH2.0 connector.
+The TP5410 supports external **3.7V LiPo single cell batteries** via the PH2.0 connector.
 Common compatible batteries include 18650 cells with PH2.0 leads or flat LiPo packs
 in the 500mAh-2000mAh range.
 
 **Important:** Pay close attention to polarity before connecting — positive and negative
 are marked on the PCB. Reversing polarity will damage the board.
 
-The TP5400 provides:
+The TP5410 provides:
 - Charging via USB-C while battery is connected
 - Automatic switchover between USB and battery power
 - Battery level indication via the 4x blue LEDs (25% per LED)
@@ -114,7 +114,7 @@ The TP5400 provides:
 The board will function normally on USB power alone without a battery connected.
 
 ### LEDs
-The **4 blue LEDs** are driven directly by the TP5400 battery management IC and indicate charge
+The **4 blue LEDs** are driven directly by the TP5410 battery management IC and indicate charge
 level. They cannot be controlled via software. The only way to silence them is physical
 (tape, nail polish, or desoldering).
 
@@ -415,7 +415,7 @@ under ESP32 control.
 - [ ] 2x Red LED GPIO pins not identified — believed hardwired to power rail
 - [ ] 1x Green LED GPIO pin not identified — believed hardwired as power indicator
 - [ ] Volume buttons wired as binary sensors — HA automations needed for actual volume control
-- [ ] Blue battery LEDs cannot be disabled in software (TP5400 hardware controlled)
+- [ ] Blue battery LEDs cannot be disabled in software (TP5410 hardware controlled)
 
 ---
 
