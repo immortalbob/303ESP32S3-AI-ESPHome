@@ -39,7 +39,7 @@ powered on, you have the right board.
 | Microphone | INMP441 I2S MEMS |
 | Amplifier | MAX98357A I2S Class-D |
 | USB | CH340X (one-key flash, no manual reset needed) |
-| Battery | TP5400 management chip, PH2.0 connector |
+| Battery | TP5410 management chip, PH2.0 connector |
 | Speaker | PH2.0 connector (included in kit) |
 | Buttons | 5x (Vol Up, Vol Down, WiFi, BOOT, EN) |
 | LEDs | 4x Blue (TP5400 battery indicator), 2x Red, 1x Green |
@@ -73,7 +73,8 @@ This pinout was determined through a combination of:
 | 2x Red LEDs | Unknown | Not found after exhaustive GPIO scan |
 | 1x Green LED | Unknown | Not found after exhaustive GPIO scan |
 | 4x Blue LEDs | N/A | TP5400 hardware controlled, not ESP32 |
-
+| Status LED (WS2812) | GPIO48 | Confirmed from source — NOT POPULATED on this variant |
+| Touch button | GPIO47 | Confirmed from source — NOT POPULATED on this variant |
 ---
 
 ## Hardware Notes
@@ -126,6 +127,8 @@ rather than controlled by the ESP32. The green LED appears to be a simple power 
 - **No OLED display** — The Xiaozhi firmware attempts to initialize an SSD1306 display and fails.
   A sibling SKU exists with the display populated. Your board is the "compact" variant without it.
 - **No camera** — Camera support exists in the firmware but no header is present on this variant.
+- **No status LED** — GPIO48 is defined as `BUILTIN_LED_GPIO` in source code as a WS2812 NeoPixel, but is not physically present on this variant.
+- **No touch button** — GPIO47 is defined as `TOUCH_BUTTON_GPIO` in source code, but is not physically present on this variant.
 
 ### PSRAM
 This board uses **octal PSRAM** (N16R8). The `psram: mode: octal` setting is mandatory.
@@ -452,8 +455,7 @@ that worked here was:
 4. Systematic GPIO scanning — ADC for buttons, digital for PIR, output for LEDs
 5. Iterate, iterate, iterate
 
-Good luck. You'll need it. But probably less than we did.
-
+Special thanks to the eBay seller who provided the original schematic and board source code after being contacted post-purchase. This definitively confirmed all GPIO assignments and hardware population status, and proved that reverse engineering an undocumented board with AI assistance can get you 95% of the way there before the manufacturer even responds.
 ---
 
 ## License
