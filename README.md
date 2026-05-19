@@ -42,7 +42,7 @@ powered on, you have the right board.
 | Battery | TP5410 management chip, PH2.0 connector |
 | Speaker | PH2.0 connector (included in kit) |
 | Buttons | 5x (Vol Up, Vol Down, WiFi, BOOT, EN) |
-| LEDs | 4x Blue (TP5400 battery indicator), 2x Red, 1x Green |
+| LEDs | 4x Blue (TP5410 battery indicator), 2x Red, 1x Green |
 | PIR | Header exposed (GND, OUT, VCC) — HC-SR501 compatible |
 
 ---
