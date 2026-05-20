@@ -455,7 +455,6 @@ that worked here was:
 4. Systematic GPIO scanning — ADC for buttons, digital for PIR, output for LEDs
 5. Iterate, iterate, iterate
 
-Special thanks to the eBay seller who provided the original schematic and board source code after being contacted post-purchase. This definitively confirmed all GPIO assignments and hardware population status, and proved that reverse engineering an undocumented board with AI assistance can get you 95% of the way there before the manufacturer even responds.
 ---
 
 ## License
